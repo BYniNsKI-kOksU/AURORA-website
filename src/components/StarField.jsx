@@ -14,13 +14,13 @@ export default function StarField() {
       canvas.width = canvas.clientWidth * ratio
       canvas.height = canvas.clientHeight * ratio
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
-      const count = Math.min(300, Math.max(125, Math.floor(window.innerWidth / 5)))
+      const count = Math.min(280, Math.max(110, Math.floor(window.innerWidth / 6)))
       stars = Array.from({ length: count }, () => ({
         x: Math.random() * canvas.clientWidth,
         y: Math.random() * canvas.clientHeight,
         radius: Math.random() * 1.35 + 0.15,
         opacity: Math.random() * 0.7 + 0.1,
-        drift: Math.random() * 0.18 + 0.02,
+        drift: Math.random() * 0.045 + 0.008,
         hue: Math.random() > 0.84 ? 215 + Math.random() * 50 : 190 + Math.random() * 35,
       }))
     }
