@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useState } from 'react'
 import StarField from './components/StarField'
 import Counter from './components/Counter'
 import Reveal from './components/Reveal'

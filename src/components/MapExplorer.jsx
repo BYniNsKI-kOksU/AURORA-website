@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 
 const INITIAL_MAP = { scale: 1, x: 0, y: 0 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 export default function VideoPlayer({ src, poster }) {
   const videoRef = useRef(null)
