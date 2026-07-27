@@ -7,8 +7,8 @@ import VideoPlayer from './components/VideoPlayer'
 
 const MapExplorer = lazy(() => import('./components/MapExplorer'))
 
-const GITHUB_URL = 'https://github.com/BYniNsKI-kOksU/aurora-website'
-const DOCS_URL = '/README.md'
+const GITHUB_URL = 'https://github.com/BYniNsKI-kOksU/AURORA-website'
+const DOCS_URL = 'https://github.com/BYniNsKI-kOksU/AURORA-website/blob/main/README.md'
 
 const pipeline = [
   ['01', 'Gaia DR3', 'Astrometric and photometric source catalogue'],
