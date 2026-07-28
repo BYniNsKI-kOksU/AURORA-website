@@ -7,44 +7,84 @@ import VideoPlayer from './components/VideoPlayer'
 
 const MapExplorer = lazy(() => import('./components/MapExplorer'))
 
-const GITHUB_URL = 'https://github.com/BYniNsKI-kOksU/AURORA-website'
-const DOCS_URL = 'https://github.com/BYniNsKI-kOksU/AURORA-website/blob/main/README.md'
+const GITHUB_URL = 'https://github.com/BYniNsKI-kOksU/project-AURORA'
+const DOCS_URL = `${GITHUB_URL}/blob/main/README.md`
+const RELEASES_URL = `${GITHUB_URL}/releases/latest`
 
-const pipeline = [
-  ['01', 'Gaia DR3', 'Astrometric and photometric source catalogue'],
-  ['02', 'Catalogue processing', 'Validated, filtered and tiled source data'],
-  ['03', 'Physical properties', 'Flux, magnitude and stellar distance'],
-  ['04', 'Temperature model', 'Blackbody-inspired chromatic response'],
-  ['05', 'Hammer projection', 'Equal-area galactic coordinate mapping'],
-  ['06', 'High-res rendering', 'Point spread function and tone mapping'],
-  ['07', 'Relativistic lensing', 'Paczynski transient light curves'],
-  ['08', '16K / 32K output', 'Publication and cinema-scale masters'],
+const pipelineTracks = [
+  {
+    number: '01',
+    type: 'map',
+    label: 'Foundation',
+    title: 'All-sky map',
+    copy: 'A resumable Gaia DR3 download feeds a memory-aware renderer that turns up to 150 million measured sources into a 16-bit Hammer panorama.',
+    metrics: ['150M sources', '16,384 × 8,192', '16-bit PNG'],
+    route: 'Gaia DR3 → FITS → Hammer PNG',
+  },
+  {
+    number: '02',
+    type: 'lensing',
+    label: 'Transient sky',
+    title: 'Microlensing',
+    copy: 'Gaia microlensing events are animated with the point-source, point-lens Paczyński model and composited over the high-resolution sky.',
+    metrics: ['625 frames', '25 seconds', '10-bit HEVC'],
+    route: 'Event catalogue + map → MP4',
+  },
+  {
+    number: '03',
+    type: 'variable',
+    label: 'Variable sky',
+    title: 'Stellar pulsation',
+    copy: 'Five classes of variable stars receive distinct, deterministic light-curve styles across a compressed eighteen-day observing window.',
+    metrics: ['5 star classes', '1,500 frames', '60 seconds'],
+    route: 'Variable FITS + map → MP4',
+  },
+  {
+    number: '04',
+    type: 'motion',
+    label: 'Dynamic catalogue',
+    title: 'Proper motion',
+    copy: 'Stellar positions are propagated linearly from Gaia epoch 2016.0, with optional radial velocity and a full-sky equirectangular view.',
+    metrics: ['250K stars', '+100K years', '360° field'],
+    route: 'Gaia DR3 → 6D catalogue → MP4',
+  },
+  {
+    number: '05',
+    type: 'observer',
+    label: 'Spatial viewpoint',
+    title: 'Observer perspective',
+    copy: 'A heliocentric 3D catalogue renders the sky from a static point or along a smooth journey from the Solar position into the Galactic halo.',
+    metrics: ['500K stars', '20 kpc volume', '4K panorama'],
+    route: 'Gaia DR3 → 3D catalogue → MP4',
+  },
 ]
 
 const science = [
-  ['gaia', 'Gaia DR3', 'A precise three-dimensional survey of the Milky Way provides the astrometry and photometry behind every rendered source.'],
-  ['hammer', 'Hammer projection', 'An equal-area mapping turns the celestial sphere into a continuous all-sky view without favouring one region by area.'],
-  ['blackbody', 'Blackbody colour', 'Effective temperature is translated into a physically motivated chromatic approximation rather than an arbitrary colour scale.'],
-  ['temperature', 'Effective temperature', 'Gaia stellar parameters drive the spectral balance, from cooler amber stars to hot blue-white sources.'],
-  ['galactic', 'Galactic coordinates', 'Longitude and latitude align the map to the plane and centre of the Milky Way for scientific readability.'],
-  ['lensing', 'Microlensing', 'A Paczynski light curve models the transient amplification caused when a compact lens crosses the line of sight.'],
+  ['gaia', 'Gaia DR3 astrometry', 'Measured positions, parallax, proper motion and photometry form the common physical source for every AURORA pipeline.'],
+  ['hammer', 'Equal-area sky mapping', 'The Hammer projection turns the celestial sphere into a continuous 2:1 field while preserving area across the map.'],
+  ['lensing', 'Paczyński amplification', 'A point-source, point-lens curve controls the size and intensity of each transient microlensing event.'],
+  ['variable', 'Variable-star cycles', 'RR Lyrae, Cepheids, ZZ Ceti, LBV and cataclysmic variables receive class-specific stylised pulse profiles.'],
+  ['motion', 'Linear space motion', 'Proper-motion vectors update stellar directions through time, optionally including Gaia radial velocity where available.'],
+  ['observer', 'Moving viewpoint', 'Distance modulus and a changing sightline reconstruct the apparent sky from positions away from the Sun.'],
 ]
 
 const technologies = [
-  ['Py', 'Python', 'Pipeline orchestration and reproducible analysis'],
-  ['∑', 'NumPy', 'Vectorised catalogue and image operations'],
-  ['A', 'Astropy', 'Coordinates, units and astronomical models'],
-  ['ƒ', 'SciPy', 'Signal processing and numerical transforms'],
-  ['π', 'Matplotlib', 'High-resolution scientific rendering'],
-  ['▶', 'FFmpeg', '10-bit encoding and animation masters'],
-  ['G', 'Gaia Archive', 'ESA DR3 catalogue and source parameters'],
+  ['3.12', 'Python', 'Reproducible orchestration and command-line render workflows'],
+  ['∑', 'NumPy', 'Vectorised catalogue transforms, memmaps and raster operations'],
+  ['A', 'Astropy', 'FITS, time, units and astronomical coordinate systems'],
+  ['ƒ', 'SciPy', 'Convolution, Gaussian filtering and numerical processing'],
+  ['CV', 'OpenCV', 'High-throughput image operations on large frames'],
+  ['P', 'Pillow', '16-bit image output, labels and frame validation'],
+  ['▶', 'FFmpeg', 'H.264 and 10-bit HEVC animation masters'],
+  ['G', 'Gaia Archive', 'ESA DR3 astrometry, photometry and transient catalogues'],
 ]
 
-const milestones = [
-  ['2024', 'Catalogue foundation', 'Gaia DR3 ingestion, coordinate transforms and first full-sky tests.', 'complete'],
-  ['2025', 'Physical rendering', 'Temperature-aware colour, PSF modelling and 16K output pipeline.', 'complete'],
-  ['2026', 'Relativistic transients', 'Microlensing simulation and publication-ready animation workflow.', 'active'],
-  ['Next', 'Interactive atlas', 'Real source lookup, browser-scale tiling and scientific annotations.', 'future'],
+const outputRows = [
+  ['All-sky map', '150M', 'Hammer', '16,384 × 8,192', '16-bit PNG'],
+  ['Microlensing', 'Gaia events', 'Hammer', '16,384 × 8,192', 'HEVC 10-bit'],
+  ['Variable stars', '5 classes', 'Hammer', '16,384 × 8,192', 'HEVC 10-bit'],
+  ['Proper motion', '250K', 'Equirectangular', '1,920 × 960', 'H.264 MP4'],
+  ['Observer', '500K', 'Equirectangular', '3,840 × 1,920', 'H.264 MP4'],
 ]
 
 export default function App() {
@@ -65,12 +105,12 @@ export default function App() {
       <main id="main">
         <Hero />
         <Introduction />
-        <Pipeline />
+        <Pipelines />
         <Results />
         <Science />
-        <Technology />
+        <Engineering />
         <InteractiveSky />
-        <Timeline />
+        <OutputMatrix />
         <Downloads />
         <Github />
       </main>
@@ -86,10 +126,10 @@ function Header({ scrolled, menuOpen, setMenuOpen }) {
       <a className="wordmark" href="#top" aria-label="AURORA home"><span className="aurora-mark" aria-hidden="true"><i /><i /></span>AURORA</a>
       <nav className={menuOpen ? 'is-open' : ''} aria-label="Main navigation">
         <a href="#project" onClick={closeMenu}>Project</a>
-        <a href="#pipeline" onClick={closeMenu}>Pipeline</a>
+        <a href="#pipelines" onClick={closeMenu}>Pipelines</a>
         <a href="#results" onClick={closeMenu}>Results</a>
         <a href="#science" onClick={closeMenu}>Science</a>
-        <a href="#downloads" onClick={closeMenu}>Downloads</a>
+        <a href="#outputs" onClick={closeMenu}>Outputs</a>
       </nav>
       <a className="header-cta" href={GITHUB_URL} target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
       <button className="menu-button" type="button" aria-label="Toggle navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><span /><span /></button>
@@ -105,18 +145,18 @@ function Hero() {
       <div className="hero-orbit orbit-a" aria-hidden="true" />
       <div className="hero-orbit orbit-b" aria-hidden="true" />
       <div className="hero-content">
-        <p className="eyebrow"><span /> Gaia DR3 · Relativistic astrophysics</p>
+        <p className="eyebrow"><span /> Gaia DR3 · Five scientific pipelines</p>
         <h1 id="hero-title">AURORA</h1>
         <p className="expansion">Astronomical Unified Rendering<br />Of Relativistic Astrophysics</p>
-        <p className="hero-copy">A high-resolution astronomical renderer based on Gaia DR3, capable of producing physically motivated all-sky maps and relativistic transient simulations.</p>
+        <p className="hero-copy">A data-to-image laboratory for the Milky Way: all-sky mapping, microlensing, variable stars, stellar proper motion and observer-dependent 3D views.</p>
         <div className="hero-actions">
-          <a className="button button-primary" href="#project">Explore project <span>↓</span></a>
-          <a className="button button-outline" href={GITHUB_URL} target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
+          <a className="button button-primary" href="#pipelines">Explore pipelines <span>↓</span></a>
+          <a className="button button-outline" href={GITHUB_URL} target="_blank" rel="noreferrer">Source code <span>↗</span></a>
           <a className="button button-quiet" href={DOCS_URL}>Documentation</a>
-          <a className="button button-quiet" href="#downloads">Downloads</a>
+          <a className="button button-quiet" href="#outputs">Specifications</a>
         </div>
       </div>
-      <div className="hero-index"><span>ALL-SKY / 32K</span><span>GALACTIC COORDINATES</span></div>
+      <div className="hero-index"><span>ALL-SKY / 16K / 16-BIT</span><span>5 PIPELINES · 9 PYTHON MODULES</span></div>
       <a className="scroll-indicator" href="#project"><i /><span>Scroll to observe</span></a>
     </section>
   )
@@ -128,58 +168,69 @@ function Introduction() {
       <Reveal>
         <p className="section-label">01 / Mission</p>
         <div className="intro-grid">
-          <h2 id="intro-title">Rendering the galaxy<br />from <em>measurement.</em></h2>
+          <h2 id="intro-title">One catalogue.<br /><em>Five ways to move.</em></h2>
           <div className="intro-copy">
-            <p>AURORA transforms the precision of the Gaia catalogue into an explorable visual record of our galaxy. It was built to bridge scientific computation and cinematic resolution without sacrificing physical meaning.</p>
-            <p>Unlike decorative star maps, every luminous source begins with measured data. Temperature, flux and position flow through a reproducible pipeline designed for both still imagery and relativistic events.</p>
+            <p>AURORA has grown from a single high-resolution sky renderer into a family of independent astronomical pipelines. Each path begins with measured data and ends in a reproducible visual result.</p>
+            <p>The project now explores change as well as structure: gravity brightens a source, variable stars pulse, stars drift across millennia and the sky transforms when the observer leaves the Solar position.</p>
           </div>
         </div>
       </Reveal>
       <div className="stat-row">
-        <Counter value={150} suffix="M+" label="Gaia DR3 stars" />
-        <Counter value={32} suffix="K" label="Maximum render" />
-        <Counter value={16} suffix="K" label="Animation master" />
-        <div className="counter static-counter"><strong>Open</strong><span>Source architecture</span></div>
+        <Counter value={150} suffix="M" label="Gaia sources in the base map" />
+        <Counter value={5} suffix="" label="Independent render pipelines" />
+        <Counter value={500} suffix="K" label="Stars in the 3D observer model" />
+        <Counter value={100} suffix="K yr" label="Proper-motion horizon" />
       </div>
     </section>
   )
 }
 
-function Pipeline() {
+function PipelineMark({ type }) {
   return (
-    <section className="section pipeline" id="pipeline" aria-labelledby="pipeline-title">
-      <Reveal className="section-heading centred">
-        <p className="section-label">02 / Scientific pipeline</p>
-        <h2 id="pipeline-title">From catalogue row<br />to <em>celestial field.</em></h2>
-        <p>Eight deliberate stages preserve the science while scaling the output from source data to publication-grade imagery.</p>
-      </Reveal>
-      <ol className="pipeline-list">
-        {pipeline.map(([number, title, copy], index) => (
-          <Reveal as="li" key={number} delay={index * 55}>
-            <span className="pipeline-number">{number}</span>
-            <div><h3>{title}</h3><p>{copy}</p></div>
-            <span className="pipeline-state">{index < 7 ? 'Processed' : 'Master'}</span>
-          </Reveal>
-        ))}
-      </ol>
+    <div className={`pipeline-mark mark-${type}`} aria-hidden="true">
+      <span /><span /><span /><span /><span />
+    </div>
+  )
+}
+
+function Pipelines() {
+  return (
+    <section className="pipeline-shell" id="pipelines" aria-labelledby="pipelines-title">
+      <div className="section pipeline">
+        <Reveal className="section-heading split-heading">
+          <div><p className="section-label">02 / Pipeline atlas</p><h2 id="pipelines-title">A wider view<br />of <em>stellar change.</em></h2></div>
+          <p>The new architecture separates shared Gaia acquisition from specialised renderers. Proper motion and observer perspective can run without first creating the Hammer map.</p>
+        </Reveal>
+        <div className="pipeline-tracks">
+          {pipelineTracks.map((track, index) => (
+            <Reveal as="article" className={`pipeline-track pipeline-${track.type}`} key={track.title} delay={index * 55}>
+              <div className="track-topline"><span>{track.number}</span><small>{track.label}</small></div>
+              <PipelineMark type={track.type} />
+              <h3>{track.title}</h3>
+              <p>{track.copy}</p>
+              <ul>{track.metrics.map((metric) => <li key={metric}>{metric}</li>)}</ul>
+              <code>{track.route}</code>
+            </Reveal>
+          ))}
+        </div>
+      </div>
     </section>
   )
 }
 
 function Results() {
   const cards = [
-    { kind: 'image', label: '32K master map', title: 'The Milky Way, resolved', detail: '32,768 × 16,384', src: '/assets/aurora-sky-preview.jpg' },
-    { kind: 'image', label: '16K all-sky map', title: 'Catalogue-scale structure', detail: '16,384 × 8,192', src: '/assets/aurora-sky-preview.jpg' },
-    { kind: 'video', label: 'Relativistic simulation', title: 'Microlensing in motion', detail: '16K animation', src: '/assets/aurora-microlensing-preview.mp4', poster: '/assets/microlensing-poster.jpg' },
-    { kind: 'image', label: 'Web preview', title: 'A navigable galactic field', detail: '2,400 × 1,200', src: '/assets/microlensing-poster.jpg' },
+    { kind: 'image', label: 'Foundation render', title: 'The Milky Way in Hammer projection', detail: '16K master · 16-bit PNG', src: '/assets/aurora-sky-preview.jpg' },
+    { kind: 'video', label: 'Relativistic transient', title: 'Microlensing in motion', detail: 'Paczyński model · HEVC', src: '/assets/aurora-microlensing-preview.mp4', poster: '/assets/microlensing-poster.jpg' },
+    { kind: 'image', label: 'Animation frame', title: 'Transient event field', detail: 'Sparse overlay render', src: '/assets/microlensing-poster.jpg' },
   ]
 
   return (
     <section className="results-shell" id="results" aria-labelledby="results-title">
       <div className="section">
         <Reveal className="section-heading split-heading">
-          <div><p className="section-label">03 / Results</p><h2 id="results-title">Observe the<br /><em>rendered universe.</em></h2></div>
-          <p>Lightweight previews reveal the character of AURORA’s master outputs. Open any still to zoom and inspect it at full screen.</p>
+          <div><p className="section-label">03 / Results</p><h2 id="results-title">Measured data,<br /><em>visible structure.</em></h2></div>
+          <p>Browser-ready previews show the foundation map and the microlensing renderer. Full-resolution masters are distributed separately from the source repository.</p>
         </Reveal>
         <div className="results-grid">
           {cards.map((card, index) => (
@@ -248,8 +299,8 @@ function Science() {
   return (
     <section className="section science" id="science" aria-labelledby="science-title">
       <Reveal className="section-heading split-heading">
-        <div><p className="section-label">04 / Science</p><h2 id="science-title">The physics behind<br />the <em>light.</em></h2></div>
-        <p>A compact scientific model gives each rendered source a place, intensity and colour—then lets gravity temporarily change what an observer sees.</p>
+        <div><p className="section-label">04 / Science</p><h2 id="science-title">The models behind<br />the <em>motion.</em></h2></div>
+        <p>Every visual effect is tied to a defined model or coordinate transform, with explicit limits on what the result should be interpreted to mean.</p>
       </Reveal>
       <div className="science-grid">
         {science.map(([type, title, copy], index) => (
@@ -261,16 +312,34 @@ function Science() {
           </Reveal>
         ))}
       </div>
+      <Reveal className="science-note">
+        <span>Interpretation boundary</span>
+        <p>Long-range proper motion is a linear extrapolation, not an orbital integration. Observer travel changes viewpoint and apparent brightness, while the underlying stellar catalogue remains static.</p>
+      </Reveal>
     </section>
   )
 }
 
-function Technology() {
+function Engineering() {
+  const practices = [
+    ['01', 'Resumable acquisition', 'Fifty deterministic Gaia ranges, retries and existing-chunk detection make the 150-million-source download recoverable.'],
+    ['02', 'Memory-aware rendering', 'Chunked FITS reads, mapped arrays, tiled projection and overlap-add convolution keep 16K processing tractable.'],
+    ['03', 'Configuration caches', 'Sparse overlay data or validated PNG frames are stored under configuration hashes and reused between runs.'],
+    ['04', 'Safe outputs', 'Catalogue files are written atomically; corrupted cached frames are detected and generated again automatically.'],
+  ]
   return (
-    <section className="section technology" aria-labelledby="technology-title">
-      <Reveal><p className="section-label">05 / Technical foundation</p><h2 id="technology-title">Built with the language<br />of <em>scientific computing.</em></h2></Reveal>
-      <div className="tech-grid">
-        {technologies.map(([icon, title, copy], index) => <Reveal as="article" className="tech-card" key={title} delay={(index % 4) * 45}><span>{icon}</span><h3>{title}</h3><p>{copy}</p></Reveal>)}
+    <section className="engineering-shell" aria-labelledby="engineering-title">
+      <div className="section technology">
+        <Reveal className="section-heading split-heading">
+          <div><p className="section-label">05 / Engineering</p><h2 id="engineering-title">Designed for<br /><em>long computations.</em></h2></div>
+          <p>The new pipelines are built to survive costly catalogue queries and high-resolution renders without discarding completed work.</p>
+        </Reveal>
+        <div className="practice-grid">
+          {practices.map(([number, title, copy], index) => <Reveal as="article" className="practice-card" key={title} delay={index * 50}><span>{number}</span><h3>{title}</h3><p>{copy}</p></Reveal>)}
+        </div>
+        <div className="tech-grid">
+          {technologies.map(([icon, title, copy], index) => <Reveal as="article" className="tech-card" key={title} delay={(index % 4) * 45}><span>{icon}</span><h3>{title}</h3><p>{copy}</p></Reveal>)}
+        </div>
       </div>
     </section>
   )
@@ -282,7 +351,7 @@ function InteractiveSky() {
       <div className="section">
         <Reveal className="section-heading split-heading">
           <div><p className="section-label">06 / Interactive sky</p><h2 id="interactive-title">Select a point<br />in the <em>galaxy.</em></h2></div>
-          <p>Explore the preview field and inspect a representative Gaia source. The component is ready to accept tiled imagery and live catalogue records.</p>
+          <p>Navigate the all-sky preview, zoom into the rendered structure and inspect a representative Gaia source at any galactic coordinate.</p>
         </Reveal>
         <Suspense fallback={<div className="map-loading" role="status">Calibrating sky coordinates…</div>}><MapExplorer /></Suspense>
       </div>
@@ -290,29 +359,43 @@ function InteractiveSky() {
   )
 }
 
-function Timeline() {
+function OutputMatrix() {
   return (
-    <section className="section timeline" aria-labelledby="timeline-title">
-      <Reveal><p className="section-label">07 / Project timeline</p><h2 id="timeline-title">A long exposure,<br /><em>still developing.</em></h2></Reveal>
-      <ol>
-        {milestones.map(([year, title, copy, state], index) => <Reveal as="li" key={title} className={state} delay={index * 70}><span>{year}</span><i /><h3>{title}</h3><p>{copy}</p></Reveal>)}
-      </ol>
+    <section className="section output-matrix" id="outputs" aria-labelledby="outputs-title">
+      <Reveal className="section-heading split-heading">
+        <div><p className="section-label">07 / Output matrix</p><h2 id="outputs-title">Five pipelines,<br /><em>clearly resolved.</em></h2></div>
+        <p>Default production settings from the current codebase. Every animation uses a 2:1 full-sky frame and can be tested at smaller settings first.</p>
+      </Reveal>
+      <Reveal className="matrix-wrap">
+        <div className="matrix-row matrix-header" aria-hidden="true"><span>Pipeline</span><span>Scale</span><span>Projection</span><span>Default frame</span><span>Output</span></div>
+        {outputRows.map((row) => (
+          <div className="matrix-row" key={row[0]}>
+            {row.map((cell, index) => <span key={cell} data-label={['Pipeline', 'Scale', 'Projection', 'Default frame', 'Output'][index]}>{cell}</span>)}
+          </div>
+        ))}
+      </Reveal>
+      <div className="format-notes">
+        <Reveal><strong>Python 3.12+</strong><span>Pinned numerical stack</span></Reveal>
+        <Reveal delay={60}><strong>NPZ or CSV</strong><span>Motion catalogues</span></Reveal>
+        <Reveal delay={120}><strong>libx264 / libx265</strong><span>Video encoding</span></Reveal>
+        <Reveal delay={180}><strong>Config-hashed</strong><span>Validated frame caches</span></Reveal>
+      </div>
     </section>
   )
 }
 
 function Downloads() {
   const items = [
-    ['01', 'Source code', 'Inspect the renderer, simulation pipeline and reproducible project structure.', GITHUB_URL, 'Open GitHub'],
-    ['02', 'Documentation', 'Read the architecture, requirements and workflow behind the AURORA renders.', DOCS_URL, 'Read documentation'],
-    ['03', 'Latest release', 'Access the newest tagged build and browser-ready output previews.', GITHUB_URL, 'View releases'],
-    ['04', 'Scientific paper', 'Methods, validation and interpretation prepared for a future publication.', '#', 'In preparation'],
+    ['01', 'Source code', 'Explore all nine Python modules, renderer internals and catalogue-building workflows.', GITHUB_URL, 'Open repository'],
+    ['02', 'Bilingual documentation', 'Follow the complete Polish and English setup, data-flow and quick-start guide.', DOCS_URL, 'Read documentation'],
+    ['03', 'Full-resolution releases', 'Find large render masters and downloadable project outputs outside the source tree.', RELEASES_URL, 'View latest release'],
+    ['04', 'Scientific methods', 'Review the equations, assumptions, cache strategy and interpretation limits.', `${DOCS_URL}#models-and-transformations`, 'Review methods'],
   ]
   return (
     <section className="section downloads" id="downloads" aria-labelledby="downloads-title">
-      <Reveal className="section-heading split-heading"><div><p className="section-label">08 / Resources</p><h2 id="downloads-title">Take AURORA<br /><em>with you.</em></h2></div><p>Project materials are organized for researchers, developers and visual storytellers.</p></Reveal>
+      <Reveal className="section-heading split-heading"><div><p className="section-label">08 / Resources</p><h2 id="downloads-title">Run it.<br /><em>Inspect everything.</em></h2></div><p>The project documentation now covers every data path, input schema, default render and operational constraint.</p></Reveal>
       <div className="download-grid">
-        {items.map(([number, title, copy, href, action], index) => <Reveal as="a" href={href} className={`download-card ${href === '#' ? 'is-disabled' : ''}`} key={title} delay={index * 60} aria-disabled={href === '#'} onClick={href === '#' ? (event) => event.preventDefault() : undefined}><span>{number}</span><h3>{title}</h3><p>{copy}</p><strong>{action} <i>↗</i></strong></Reveal>)}
+        {items.map(([number, title, copy, href, action], index) => <Reveal as="a" href={href} target="_blank" rel="noreferrer" className="download-card" key={title} delay={index * 60}><span>{number}</span><h3>{title}</h3><p>{copy}</p><strong>{action} <i>↗</i></strong></Reveal>)}
       </div>
     </section>
   )
@@ -322,11 +405,14 @@ function Github() {
   return (
     <section className="section github-section" aria-labelledby="github-title">
       <Reveal className="github-panel">
-        <div className="github-copy"><p className="section-label">09 / Open research</p><h2 id="github-title">Observe the code.<br /><em>Advance the work.</em></h2><p>AURORA’s public architecture is designed for inspection, extension and future scientific collaboration.</p><a className="button button-primary" href={GITHUB_URL} target="_blank" rel="noreferrer">Explore repository <span>↗</span></a></div>
+        <div className="github-copy"><p className="section-label">09 / Open research</p><h2 id="github-title">Observe the code.<br /><em>Extend the sky.</em></h2><p>AURORA is an MIT-licensed scientific rendering project built around public ESA Gaia DR3 data, explicit assumptions and reproducible outputs.</p><a className="button button-primary" href={GITHUB_URL} target="_blank" rel="noreferrer">Explore repository <span>↗</span></a></div>
         <dl>
-          <div><dt>Stars</dt><dd>—</dd></div><div><dt>Forks</dt><dd>—</dd></div><div><dt>Commits</dt><dd>—</dd></div><div><dt>Latest release</dt><dd>Research preview</dd></div>
+          <div><dt>Scientific pipelines</dt><dd>5</dd></div>
+          <div><dt>Python modules</dt><dd>9</dd></div>
+          <div><dt>Runtime</dt><dd>Python 3.12+</dd></div>
+          <div><dt>License</dt><dd>MIT</dd></div>
         </dl>
-        <p className="api-note"><span /> GitHub API-ready data layer</p>
+        <p className="api-note"><span /> Current project architecture · July 2026</p>
       </Reveal>
     </section>
   )
@@ -337,7 +423,7 @@ function Footer() {
     <footer>
       <div className="footer-brand"><a className="wordmark" href="#top"><span className="aurora-mark" aria-hidden="true"><i /><i /></span>AURORA</a><p>Astronomical Unified Rendering<br />Of Relativistic Astrophysics</p></div>
       <p>Created by Patryk Kropacz<br />Based on publicly available ESA Gaia DR3 data.</p>
-      <nav aria-label="Footer navigation"><a href={GITHUB_URL}>GitHub</a><a href={DOCS_URL}>Documentation</a><a href={GITHUB_URL}>License</a></nav>
+      <nav aria-label="Footer navigation"><a href={GITHUB_URL}>GitHub</a><a href={DOCS_URL}>Documentation</a><a href={`${GITHUB_URL}/blob/main/LICENSE.txt`}>License</a></nav>
       <a className="back-to-top" href="#top">Return to orbit ↑</a>
     </footer>
   )
