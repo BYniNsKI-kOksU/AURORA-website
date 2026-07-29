@@ -1,11 +1,9 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import StarField from './components/StarField'
 import Counter from './components/Counter'
 import Reveal from './components/Reveal'
 import ScienceDiagram from './components/ScienceDiagram'
 import VideoPlayer from './components/VideoPlayer'
-
-const MapExplorer = lazy(() => import('./components/MapExplorer'))
 
 const GITHUB_URL = 'https://github.com/BYniNsKI-kOksU/project-AURORA'
 const DOCS_URL = `${GITHUB_URL}/blob/main/README.md`
@@ -129,7 +127,7 @@ function Header({ scrolled, menuOpen, setMenuOpen }) {
         <a href="#pipelines" onClick={closeMenu}>Pipelines</a>
         <a href="#results" onClick={closeMenu}>Results</a>
         <a href="#science" onClick={closeMenu}>Science</a>
-        <a href="#atlas" onClick={closeMenu}>Event atlas</a>
+        <a href="/microlensing-map" onClick={closeMenu}>Event atlas</a>
         <a href="#outputs" onClick={closeMenu}>Outputs</a>
       </nav>
       <a className="header-cta" href={GITHUB_URL} target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
@@ -351,10 +349,23 @@ function InteractiveSky() {
     <section className="interactive-shell" id="atlas" aria-labelledby="interactive-title">
       <div className="section">
         <Reveal className="section-heading split-heading">
-          <div><p className="section-label">06 / Microlensing atlas</p><h2 id="interactive-title">Open the event<br /><em>atlas.</em></h2></div>
-          <p>Explore all 218 valid events prepared by the Python microlensing pipeline. Search the Gaia catalogue, filter the sky and open any marker to inspect its Paczyński light curve and lens geometry.</p>
+          <div><p className="section-label">06 / Microlensing map</p><h2 id="interactive-title">Enter the event<br /><em>atlas.</em></h2></div>
+          <p>The interactive map now lives on its own focused page. Open the atlas to explore all 218 events prepared by the Python pipeline, search Gaia sources and inspect their Paczyński models.</p>
         </Reveal>
-        <Suspense fallback={<div className="map-loading" role="status">Calibrating Gaia microlensing events…</div>}><MapExplorer /></Suspense>
+        <Reveal as="a" href="/microlensing-map" className="atlas-launch-card" aria-label="Open the AURORA microlensing event atlas">
+          <img src="/assets/aurora-sky-preview.jpg" alt="" />
+          <div className="atlas-launch-grid" aria-hidden="true" />
+          <div className="atlas-launch-copy">
+            <p><span /> Interactive scientific map</p>
+            <h3>AURORA<br />Microlensing Atlas</h3>
+            <div className="atlas-launch-meta">
+              <span>218 Gaia DR3 events</span>
+              <span>Hammer projection</span>
+              <span>Paczyński PSPL model</span>
+            </div>
+          </div>
+          <strong>Launch full-screen atlas <i>↗</i></strong>
+        </Reveal>
       </div>
     </section>
   )

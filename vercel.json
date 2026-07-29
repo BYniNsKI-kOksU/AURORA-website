@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/microlensing-map",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/microlensing-map/",
+      "destination": "/index.html"
+    }
+  ]
+}
