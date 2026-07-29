@@ -129,6 +129,7 @@ function Header({ scrolled, menuOpen, setMenuOpen }) {
         <a href="#pipelines" onClick={closeMenu}>Pipelines</a>
         <a href="#results" onClick={closeMenu}>Results</a>
         <a href="#science" onClick={closeMenu}>Science</a>
+        <a href="#atlas" onClick={closeMenu}>Event atlas</a>
         <a href="#outputs" onClick={closeMenu}>Outputs</a>
       </nav>
       <a className="header-cta" href={GITHUB_URL} target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
@@ -347,13 +348,13 @@ function Engineering() {
 
 function InteractiveSky() {
   return (
-    <section className="interactive-shell" aria-labelledby="interactive-title">
+    <section className="interactive-shell" id="atlas" aria-labelledby="interactive-title">
       <div className="section">
         <Reveal className="section-heading split-heading">
-          <div><p className="section-label">06 / Interactive sky</p><h2 id="interactive-title">Select a point<br />in the <em>galaxy.</em></h2></div>
-          <p>Navigate the all-sky preview, zoom into the rendered structure and inspect a representative Gaia source at any galactic coordinate.</p>
+          <div><p className="section-label">06 / Microlensing atlas</p><h2 id="interactive-title">Open the event<br /><em>atlas.</em></h2></div>
+          <p>Explore all 218 valid events prepared by the Python microlensing pipeline. Search the Gaia catalogue, filter the sky and open any marker to inspect its Paczyński light curve and lens geometry.</p>
         </Reveal>
-        <Suspense fallback={<div className="map-loading" role="status">Calibrating sky coordinates…</div>}><MapExplorer /></Suspense>
+        <Suspense fallback={<div className="map-loading" role="status">Calibrating Gaia microlensing events…</div>}><MapExplorer /></Suspense>
       </div>
     </section>
   )
