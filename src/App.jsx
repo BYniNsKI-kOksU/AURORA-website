@@ -99,6 +99,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">Skip to content</a>
+      <AtlasAnnouncement />
       <Header scrolled={scrolled} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <main id="main">
         <Hero />
@@ -107,13 +108,22 @@ export default function App() {
         <Results />
         <Science />
         <Engineering />
-        <InteractiveSky />
         <OutputMatrix />
         <Downloads />
         <Github />
       </main>
       <Footer />
     </div>
+  )
+}
+
+function AtlasAnnouncement() {
+  return (
+    <a className="atlas-announcement" href="/microlensing-map">
+      <span><i /> New interactive release</span>
+      <strong>AURORA Microlensing Map</strong>
+      <span>218 Gaia DR3 events · Open atlas ↗</span>
+    </a>
   )
 }
 
@@ -344,38 +354,11 @@ function Engineering() {
   )
 }
 
-function InteractiveSky() {
-  return (
-    <section className="interactive-shell" id="atlas" aria-labelledby="interactive-title">
-      <div className="section">
-        <Reveal className="section-heading split-heading">
-          <div><p className="section-label">06 / Microlensing map</p><h2 id="interactive-title">Enter the event<br /><em>atlas.</em></h2></div>
-          <p>The interactive map now lives on its own focused page. Open the atlas to explore all 218 events prepared by the Python pipeline, search Gaia sources and inspect their Paczyński models.</p>
-        </Reveal>
-        <Reveal as="a" href="/microlensing-map" className="atlas-launch-card" aria-label="Open the AURORA microlensing event atlas">
-          <img src="/assets/aurora-sky-preview.jpg" alt="" />
-          <div className="atlas-launch-grid" aria-hidden="true" />
-          <div className="atlas-launch-copy">
-            <p><span /> Interactive scientific map</p>
-            <h3>AURORA<br />Microlensing Atlas</h3>
-            <div className="atlas-launch-meta">
-              <span>218 Gaia DR3 events</span>
-              <span>Hammer projection</span>
-              <span>Paczyński PSPL model</span>
-            </div>
-          </div>
-          <strong>Launch full-screen atlas <i>↗</i></strong>
-        </Reveal>
-      </div>
-    </section>
-  )
-}
-
 function OutputMatrix() {
   return (
     <section className="section output-matrix" id="outputs" aria-labelledby="outputs-title">
       <Reveal className="section-heading split-heading">
-        <div><p className="section-label">07 / Output matrix</p><h2 id="outputs-title">Five pipelines,<br /><em>clearly resolved.</em></h2></div>
+        <div><p className="section-label">06 / Output matrix</p><h2 id="outputs-title">Five pipelines,<br /><em>clearly resolved.</em></h2></div>
         <p>Default production settings from the current codebase. Every animation uses a 2:1 full-sky frame and can be tested at smaller settings first.</p>
       </Reveal>
       <Reveal className="matrix-wrap">
@@ -405,7 +388,7 @@ function Downloads() {
   ]
   return (
     <section className="section downloads" id="downloads" aria-labelledby="downloads-title">
-      <Reveal className="section-heading split-heading"><div><p className="section-label">08 / Resources</p><h2 id="downloads-title">Run it.<br /><em>Inspect everything.</em></h2></div><p>The project documentation now covers every data path, input schema, default render and operational constraint.</p></Reveal>
+      <Reveal className="section-heading split-heading"><div><p className="section-label">07 / Resources</p><h2 id="downloads-title">Run it.<br /><em>Inspect everything.</em></h2></div><p>The project documentation now covers every data path, input schema, default render and operational constraint.</p></Reveal>
       <div className="download-grid">
         {items.map(([number, title, copy, href, action], index) => <Reveal as="a" href={href} target="_blank" rel="noreferrer" className="download-card" key={title} delay={index * 60}><span>{number}</span><h3>{title}</h3><p>{copy}</p><strong>{action} <i>↗</i></strong></Reveal>)}
       </div>
@@ -417,7 +400,7 @@ function Github() {
   return (
     <section className="section github-section" aria-labelledby="github-title">
       <Reveal className="github-panel">
-        <div className="github-copy"><p className="section-label">09 / Open research</p><h2 id="github-title">Observe the code.<br /><em>Extend the sky.</em></h2><p>AURORA is an MIT-licensed scientific rendering project built around public ESA Gaia DR3 data, explicit assumptions and reproducible outputs.</p><a className="button button-primary" href={GITHUB_URL} target="_blank" rel="noreferrer">Explore repository <span>↗</span></a></div>
+        <div className="github-copy"><p className="section-label">08 / Open research</p><h2 id="github-title">Observe the code.<br /><em>Extend the sky.</em></h2><p>AURORA is an MIT-licensed scientific rendering project built around public ESA Gaia DR3 data, explicit assumptions and reproducible outputs.</p><a className="button button-primary" href={GITHUB_URL} target="_blank" rel="noreferrer">Explore repository <span>↗</span></a></div>
         <dl>
           <div><dt>Scientific pipelines</dt><dd>5</dd></div>
           <div><dt>Python modules</dt><dd>9</dd></div>
