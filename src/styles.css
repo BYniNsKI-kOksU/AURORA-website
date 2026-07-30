@@ -320,7 +320,9 @@ h2 em { color: #aac9ee; font-family: var(--serif); font-weight: 300; }
 .event-close { position: absolute; z-index: 5; top: 15px; right: 16px; display: grid; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line); background: rgba(5,8,12,.85); color: #dbe8f2; font: 300 20px/1 var(--sans); cursor: pointer; place-items: center; }
 .event-visual { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: radial-gradient(circle at 62% 38%, #111d2b, #070b11 44%, #040608 100%); }
 .event-visual::before { content: ""; position: absolute; inset: 0; opacity: .2; background-image: radial-gradient(circle, #fff 0 1px, transparent 1.3px); background-size: 89px 89px; pointer-events: none; }
-.event-visual-head { position: absolute; z-index: 2; top: 22px; right: 24px; left: 24px; display: flex; justify-content: space-between; color: #8a98a6; font: 400 8px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.event-visual-head { position: absolute; z-index: 2; top: 22px; right: 24px; left: 24px; display: flex; justify-content: space-between; gap: 24px; color: #8a98a6; font: 400 8px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.event-visual-head span, .event-visual-head small { display: block; }
+.event-visual-head small { margin-top: 7px; color: #596674; font: 400 7px/1.35 var(--mono); letter-spacing: .04em; text-transform: none; }
 .event-visual-head strong { color: var(--cyan); font-weight: 400; }
 .lensing-diagram { position: absolute; inset: 48px 0 92px; width: 100%; height: calc(100% - 140px); overflow: visible; }
 .lensing-diagram path, .lensing-diagram circle, .lensing-diagram rect, .lensing-diagram line { vector-effect: non-scaling-stroke; }
@@ -328,18 +330,20 @@ h2 em { color: #aac9ee; font-family: var(--serif); font-weight: 300; }
 .lensing-track { fill: none; stroke: rgba(255,255,255,.12); stroke-dasharray: 6 7; }
 .lensing-diagram .ray { fill: none; stroke-width: 1.2; }
 .ray-a { stroke: var(--cyan); }
-.ray-b { stroke: #7f9bcd; }
+.ray-b { stroke: #ffb45e; }
+.lens-plane-line { fill: none; stroke: rgba(255,255,255,.3); stroke-width: 1; stroke-dasharray: 4 5; }
 .observer { fill: #edf6fc; }
 .lens-body { fill: #020304; stroke: #8eddf5; stroke-width: 2; }
 .lens-ring { fill: none; stroke: rgba(142,221,245,.4); }
 .lensing-diagram text { fill: #788897; font: 400 8px var(--mono); letter-spacing: .05em; }
 .image-plane rect, .source-plane rect { fill: rgba(3,6,10,.72); stroke: rgba(203,229,251,.16); }
-.image-plane > path { fill: none; stroke-width: 4; stroke-linecap: round; }
+.image-plane .plane-grid, .source-plane .plane-grid { fill: none; stroke: rgba(203,229,251,.12); stroke-width: 1; }
 .einstein-ring { fill: none; stroke: rgba(131,231,247,.33); stroke-dasharray: 3 4; }
-.source-plane line { stroke: rgba(203,229,251,.18); stroke-dasharray: 5 5; }
 .caustic { fill: #7a8fff; }
 .diagram-amplification { fill: #eff8ff !important; font-size: 17px !important; }
 .diagram-equation { fill: #667583 !important; }
+.diagram-caption { fill: #55616c !important; font-size: 7px !important; }
+.rho-label { fill: #55616c !important; font-size: 7px !important; }
 .event-timeline { position: absolute; z-index: 2; right: 27px; bottom: 25px; left: 27px; padding: 15px 18px; background: rgba(5,8,12,.72); border: 1px solid var(--line); backdrop-filter: blur(12px); }
 .event-timeline > div { display: flex; justify-content: space-between; gap: 15px; color: #687684; font: 400 8px/1 var(--mono); text-transform: uppercase; }
 .event-timeline output { color: #c7d9e8; }

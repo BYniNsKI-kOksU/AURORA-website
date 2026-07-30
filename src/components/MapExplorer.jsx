@@ -31,6 +31,90 @@ const amplification = (tau, u0) => {
   return (uSquared + 2) / Math.sqrt(uSquared * (uSquared + 4))
 }
 
+const FINITE_SOURCE_DISPLAY_RADIUS = .05
+
+const superscriptInteger = (value) => String(value)
+  .replace('-', '⁻')
+  .replace(/[0-9]/g, (digit) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(digit)])
+
+const formatSeparation = (value) => {
+  if (value == null) return '—'
+  const magnitude = Math.abs(value)
+  if (magnitude === 0) return '0'
+  if (magnitude < .001) {
+    const exponent = Math.floor(Math.log10(magnitude))
+    return `${(value / 10 ** exponent).toFixed(2)} × 10${superscriptInteger(exponent)}`
+  }
+  return format(value, 3)
+}
+
+const formatAmplification = (value) => {
+  if (value < 10000) return `${format(value, 2)}×`
+  const exponent = Math.floor(Math.log10(value))
+  return `${(value / 10 ** exponent).toFixed(2)} × 10${superscriptInteger(exponent)}`
+}
+
+function pointLensState(u0, tau) {
+  const impact = Number.isFinite(u0) ? u0 : 0
+  const phase = Number.isFinite(tau) ? tau : 0
+  const uSquared = impact * impact + phase * phase
+  const u = Math.sqrt(uSquared)
+  const root = Math.sqrt(uSquared + 4)
+  const thetaPlus = .5 * (u + root)
+  const thetaMinusRaw = .5 * (u - root)
+  const thetaMinus = thetaMinusRaw === 0 && u > 0 ? -2 / (u + root) : thetaMinusRaw
+  const safeU = Math.max(u, 1e-12)
+  const total = (uSquared + 2) / (safeU * root)
+  const muPlus = .5 * (1 + total)
+  const muMinus = Math.max(0, .5 * (total - 1))
+  const lensOffset = { x: phase, y: impact }
+  const sourceOffset = { x: -phase, y: -impact }
+  const direction = u > 0
+    ? { x: sourceOffset.x / u, y: sourceOffset.y / u }
+    : { x: -1, y: 0 }
+
+  return {
+    u,
+    uSquared,
+    thetaPlus,
+    thetaMinus,
+    muPlus,
+    muMinus,
+    amplification: muPlus + muMinus,
+    direction,
+    lensOffset,
+    sourceOffset,
+    aligned: uSquared === 0,
+  }
+}
+
+function finiteSourceImageContours(sourceOffset, radius = FINITE_SOURCE_DISPLAY_RADIUS, samples = 80) {
+  const plus = []
+  const minus = []
+
+  for (let index = 0; index < samples; index += 1) {
+    const angle = 2 * Math.PI * (index + .5) / samples
+    const betaX = sourceOffset.x + radius * Math.cos(angle)
+    const betaY = sourceOffset.y + radius * Math.sin(angle)
+    const beta = Math.hypot(betaX, betaY)
+    const unit = beta > 1e-10
+      ? { x: betaX / beta, y: betaY / beta }
+      : { x: Math.cos(angle + Math.PI / 2), y: Math.sin(angle + Math.PI / 2) }
+    const root = Math.sqrt(beta * beta + 4)
+    const thetaPlus = .5 * (beta + root)
+    const thetaMinus = -2 / (beta + root)
+
+    plus.push({ x: unit.x * thetaPlus, y: unit.y * thetaPlus })
+    minus.push({ x: unit.x * thetaMinus, y: unit.y * thetaMinus })
+  }
+
+  return {
+    plus,
+    minus,
+    containsCaustic: Math.hypot(sourceOffset.x, sourceOffset.y) < radius,
+  }
+}
+
 function eventMatches(event, filter, query) {
   const filterMatches = filter === 'all'
     || (filter === 'strong' && event.aMax >= 2)
@@ -349,7 +433,7 @@ function EventTooltip({ event, position, total }) {
 
 function EventDetail({ event, onClose, onFocus }) {
   const [tau, setTau] = useState(0)
-  const currentAmplification = amplification(tau, event.u0)
+  const currentAmplification = pointLensState(event.u0, tau).amplification
 
   return (
     <div className="event-dialog" role="dialog" aria-modal="true" aria-labelledby="event-dialog-title" onMouseDown={(mouseEvent) => {
@@ -358,10 +442,16 @@ function EventDetail({ event, onClose, onFocus }) {
       <article className="event-sheet">
         <button className="event-close" type="button" onClick={onClose} aria-label="Close event details">×</button>
         <section className="event-visual">
-          <div className="event-visual-head"><span>Third-person lensing geometry</span><strong>PSPL / PACZYŃSKI</strong></div>
+          <div className="event-visual-head">
+            <div>
+              <span>Third-person lensing geometry</span>
+              <small>Thin-lens approximation · distances are not shown to scale</small>
+            </div>
+            <strong>PSPL / PACZYŃSKI</strong>
+          </div>
           <LensingDiagram event={event} tau={tau} />
           <div className="event-timeline">
-            <div><label htmlFor="event-time">Time from peak</label><output>{tau >= 0 ? '+' : ''}{format(tau, 2)} tE · A = {format(currentAmplification, 2)}×</output></div>
+            <div><label htmlFor="event-time">Time from peak</label><output>{tau >= 0 ? '+' : ''}{format(tau, 2)} tE · A = {formatAmplification(currentAmplification)}</output></div>
             <input id="event-time" type="range" min="-3" max="3" step=".01" value={tau} onChange={(inputEvent) => setTau(Number(inputEvent.target.value))} />
           </div>
         </section>
@@ -372,7 +462,7 @@ function EventDetail({ event, onClose, onFocus }) {
           <div className="event-hero-stats">
             <div><span>Peak amplification</span><strong>{format(event.aMax, 2)}×</strong></div>
             <div><span>Timescale tE</span><strong>{format(event.te, 1)} d</strong></div>
-            <div><span>Impact u₀</span><strong>{format(event.u0, 3)}</strong></div>
+            <div><span>Impact u₀</span><strong>{formatSeparation(event.u0)}</strong></div>
           </div>
 
           <EventSection title="Time and position">
@@ -415,7 +505,7 @@ function EventDetail({ event, onClose, onFocus }) {
             <PaczynskiCurve event={event} tau={tau} />
           </EventSection>
 
-          <p className="event-science-note">The geometry is normalised to the Einstein radius. Source and observer remain fixed while the lens moves across the line of sight in the thin-lens, point-source model.</p>
+          <p className="event-science-note">The geometry is normalised to the Einstein radius. Source and observer remain fixed while the lens moves in one direction at constant speed; τ = 0 is closest approach, not a turning point. Rays change direction only in the thin-lens plane. The image plane preserves the exact PSPL positions θ+ and θ− and also maps an illustrative extended source with ρvis = 0.05 θE. This visual layer produces physical arcs and a near-ring without changing the catalogue PSPL light curve; the mathematically thin Einstein ring remains exclusive to u = 0.</p>
           <div className="event-actions">
             <button type="button" onClick={() => navigator.clipboard?.writeText(event.sourceId)}>Copy Gaia ID</button>
             <button type="button" onClick={onFocus}>Show on map</button>
@@ -464,57 +554,295 @@ function PaczynskiCurve({ event, tau }) {
 }
 
 function LensingDiagram({ event, tau }) {
+  const width = 900
+  const height = 560
   const sourceColour = event.sourceColor?.css || '#d9f0ff'
-  const u = Math.sqrt(event.u0 * event.u0 + tau * tau)
-  const currentAmplification = amplification(tau, event.u0)
-  const lensX = 445 + tau * 62
-  const lensY = 290 + Math.max(-1.5, Math.min(1.5, event.u0)) * 22
-  const arcSpan = 16 + 152 * Math.exp(-u * 2.7)
-  const ringOpacity = Math.max(.2, Math.min(1, 1.2 - u))
+  const lensState = pointLensState(event.u0, tau)
+  const {
+    u,
+    thetaPlus,
+    thetaMinus,
+    muPlus,
+    muMinus,
+    amplification: currentAmplification,
+    direction,
+    lensOffset,
+    sourceOffset,
+    aligned,
+  } = lensState
+
+  const axisY = height * .63
+  const observer = { x: width * .11, y: axisY }
+  const source = { x: width * .89, y: axisY }
+  const lensOrigin = { x: width * .5, y: axisY }
+  const trackDir = { x: .34, y: Math.sqrt(1 - .34 * .34) }
+  const impactDir = { x: -Math.sqrt(1 - .34 * .34), y: .34 }
+  const trajectoryExtent = Math.max(1, Math.hypot(3.25, lensOffset.y))
+  const trajectoryScale = Math.min(36, Math.min(width * .17, height * .16) / trajectoryExtent)
+  const closest = {
+    x: lensOrigin.x + impactDir.x * lensOffset.y * trajectoryScale,
+    y: lensOrigin.y + impactDir.y * lensOffset.y * trajectoryScale,
+  }
+  const lens = {
+    x: closest.x + trackDir.x * lensOffset.x * trajectoryScale,
+    y: closest.y + trackDir.y * lensOffset.x * trajectoryScale,
+  }
+  const trackStart = {
+    x: closest.x - trackDir.x * 3.25 * trajectoryScale,
+    y: closest.y - trackDir.y * 3.25 * trajectoryScale,
+  }
+  const trackEnd = {
+    x: closest.x + trackDir.x * 3.25 * trajectoryScale,
+    y: closest.y + trackDir.y * 3.25 * trajectoryScale,
+  }
+  const projectedSource = {
+    x: trackDir.x * sourceOffset.x + impactDir.x * sourceOffset.y,
+    y: trackDir.y * sourceOffset.x + impactDir.y * sourceOffset.y,
+  }
+  const imageAxis = u > 0
+    ? { x: projectedSource.x / u, y: projectedSource.y / u }
+    : { x: -trackDir.x, y: -trackDir.y }
+  const bendScale = trajectoryScale * .82
+  const bendPlus = {
+    x: lens.x + imageAxis.x * thetaPlus * bendScale,
+    y: lens.y + imageAxis.y * thetaPlus * bendScale,
+  }
+  const bendMinus = {
+    x: lens.x + imageAxis.x * thetaMinus * bendScale,
+    y: lens.y + imageAxis.y * thetaMinus * bendScale,
+  }
+  const planeHalf = Math.max(Math.abs(thetaPlus), Math.abs(thetaMinus)) * bendScale + 12
+  const planeStart = {
+    x: lens.x - imageAxis.x * planeHalf,
+    y: lens.y - imageAxis.y * planeHalf,
+  }
+  const planeEnd = {
+    x: lens.x + imageAxis.x * planeHalf,
+    y: lens.y + imageAxis.y * planeHalf,
+  }
+
+  const totalMu = Math.max(1e-12, muPlus + muMinus)
+  const sharePlus = muPlus / totalMu
+  const shareMinus = muMinus / totalMu
+  const rayPlusWidth = 1.1 + 3.2 * Math.sqrt(sharePlus)
+  const rayMinusWidth = 1.1 + 3.2 * Math.sqrt(shareMinus)
+  const rayPlusOpacity = .28 + .7 * Math.sqrt(sharePlus)
+  const rayMinusOpacity = .28 + .7 * Math.sqrt(shareMinus)
+
+  const panelWidth = 238
+  const panelHeight = 130
+  const panelTop = 73
+  const imageInset = { x: 18, y: panelTop, width: panelWidth, height: panelHeight }
+  const sourceInset = { x: width - panelWidth - 18, y: panelTop, width: panelWidth, height: panelHeight }
+  const imageCentre = {
+    x: imageInset.x + imageInset.width * .5,
+    y: imageInset.y + imageInset.height * .68,
+  }
+  const imageExtent = Math.max(1.12, Math.abs(thetaPlus), Math.abs(thetaMinus))
+  const imageScale = Math.min(29, imageInset.width * .29 / imageExtent, imageInset.height * .29 / imageExtent)
+  const einsteinRadius = imageScale
+  const imagePlus = {
+    x: imageCentre.x + direction.x * thetaPlus * imageScale,
+    y: imageCentre.y + direction.y * thetaPlus * imageScale,
+  }
+  const imageMinus = {
+    x: imageCentre.x + direction.x * thetaMinus * imageScale,
+    y: imageCentre.y + direction.y * thetaMinus * imageScale,
+  }
+  const imageAngle = Math.atan2(direction.y, direction.x) * 180 / Math.PI + 90
+  const finiteContours = finiteSourceImageContours(sourceOffset)
+  const contourPath = (points) => `${points.map((point, index) => {
+    const x = imageCentre.x + point.x * imageScale
+    const y = imageCentre.y + point.y * imageScale
+    return `${index ? 'L' : 'M'} ${x.toFixed(2)} ${y.toFixed(2)}`
+  }).join(' ')} Z`
+  const plusContour = contourPath(finiteContours.plus)
+  const minusContour = contourPath(finiteContours.minus)
+  const pointRatio = u / FINITE_SOURCE_DISPLAY_RADIUS
+  const pointVisibility = pointRatio * pointRatio / (.08 + pointRatio * pointRatio)
+
+  const pointImage = (point, colour, mu, share, label, labelOffset) => {
+    const strength = Math.min(1, Math.log1p(mu) / Math.log(32))
+    const core = 2.3 + 1.9 * strength
+    const major = core * (1.35 + 1.15 * strength)
+    const minor = Math.max(1.7, core * .58)
+
+    return (
+      <g key={label} data-image={label} opacity={(.45 + .53 * Math.sqrt(share)) * pointVisibility}>
+        <ellipse cx={point.x} cy={point.y} rx={major + 3} ry={minor + 2} fill={colour} opacity=".22" transform={`rotate(${imageAngle} ${point.x} ${point.y})`} filter="url(#image-psf)" />
+        <ellipse cx={point.x} cy={point.y} rx={major} ry={minor} fill={colour} opacity=".42" transform={`rotate(${imageAngle} ${point.x} ${point.y})`} />
+        <circle cx={point.x} cy={point.y} r={core} fill={sourceColour} stroke={colour} strokeWidth="1.2" />
+        <text x={point.x + 7} y={point.y + labelOffset} style={{ fill: colour }}>{label}</text>
+      </g>
+    )
+  }
+
+  const sourceCentre = {
+    x: sourceInset.x + sourceInset.width * .5,
+    y: sourceInset.y + sourceInset.height * .68,
+  }
+  const sourceExtent = Math.max(3.15, event.u0 + .4)
+  const sourceScale = Math.min(15.5, sourceInset.width * .31 / 3.15, sourceInset.height * .29 / sourceExtent)
+  const sourceTrackY = sourceCentre.y + sourceOffset.y * sourceScale
+  const sourceMarker = {
+    x: sourceCentre.x + sourceOffset.x * sourceScale,
+    y: sourceTrackY,
+  }
+  const sourceTrackStart = sourceCentre.x - 3 * sourceScale
+  const sourceTrackEnd = sourceCentre.x + 3 * sourceScale
+  const impactBracketX = sourceCentre.x + 3.18 * sourceScale
+  const brightening = Math.min(1, Math.log1p(Math.max(0, currentAmplification - 1)) / Math.log(30))
+  const sourceCoreRadius = 5.5 + 1.8 * brightening
+  const sourceHaloRadius = 14 + 10 * brightening
+  const atPeak = tau === 0
+  const theme = event.massIsEstimated
+    ? { halo: '#ffb45e', rim: '#ffb45e', accent: '#f2eee4', text: 'LENS · MODEL' }
+    : { halo: '#65d8ff', rim: '#88deff', accent: '#d7f5ff', text: 'LENS · CATALOGUE MASS' }
+  const imageStatus = aligned
+    ? 'u = 0 · EINSTEIN RING'
+    : finiteContours.containsCaustic
+      ? `u = ${formatSeparation(u)} · NEAR-RING`
+      : `u = ${formatSeparation(u)} · TWO EXTENDED IMAGES`
+  const planeError = (point) => Math.abs(
+    (point.x - lens.x) * imageAxis.y - (point.y - lens.y) * imageAxis.x,
+  )
 
   return (
-    <svg className="lensing-diagram" viewBox="0 0 900 560" role="img" aria-label={`Microlensing geometry for ${event.name}`}>
+    <svg
+      className="lensing-diagram"
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label={`Microlensing geometry for ${event.name}`}
+      data-u={u}
+      data-u0={event.u0}
+      data-tau={tau}
+      data-aligned={aligned}
+      data-theta-plus={thetaPlus}
+      data-theta-minus={thetaMinus}
+      data-mu-plus={muPlus}
+      data-mu-minus={muMinus}
+      data-amplification={currentAmplification}
+      data-lens-x={lens.x}
+      data-lens-y={lens.y}
+      data-closest-x={closest.x}
+      data-closest-y={closest.y}
+      data-bend-plus-plane-error={planeError(bendPlus)}
+      data-bend-minus-plane-error={planeError(bendMinus)}
+    >
+      <title>Microlensing geometry for {event.name}</title>
+      <desc>PSPL model with rectilinear lens motion, a fixed observer and source, and two-segment rays bending only in the thin-lens plane.</desc>
       <defs>
         <radialGradient id="source-halo">
-          <stop offset="0" stopColor={sourceColour} stopOpacity=".65" />
+          <stop offset="0" stopColor={sourceColour} stopOpacity={.34 + .24 * brightening} />
           <stop offset="1" stopColor={sourceColour} stopOpacity="0" />
         </radialGradient>
         <radialGradient id="lens-halo">
-          <stop offset="0" stopColor="#83e7f7" stopOpacity=".24" />
-          <stop offset="1" stopColor="#83e7f7" stopOpacity="0" />
+          <stop offset="0" stopColor={theme.halo} stopOpacity=".48" />
+          <stop offset="1" stopColor={theme.halo} stopOpacity="0" />
         </radialGradient>
+        <filter id="image-psf" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="1.8" />
+        </filter>
+        <filter id="extended-image-glow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="2.2" />
+        </filter>
+        <marker id="motion-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 Z" fill={theme.rim} opacity=".75" />
+        </marker>
       </defs>
-      <path className="lensing-axis" d="M155 345 L748 165" />
-      <path className="lensing-track" d="M260 92 L645 485" />
-      <path className="ray ray-a" d={`M748 165 L${lensX - 18} ${lensY - 20} L155 345`} />
-      <path className="ray ray-b" d={`M748 165 L${lensX + 18} ${lensY + 20} L155 345`} />
-      <circle cx="748" cy="165" r={58 + Math.min(40, Math.log1p(currentAmplification) * 12)} fill="url(#source-halo)" />
-      <circle cx="748" cy="165" r="7" fill={sourceColour} />
-      <circle cx="155" cy="345" r="6" className="observer" />
-      <circle cx={lensX} cy={lensY} r="38" fill="url(#lens-halo)" />
-      <circle cx={lensX} cy={lensY} r="14" className="lens-body" />
-      <circle cx={lensX} cy={lensY} r="23" className="lens-ring" />
-      <text x="118" y="376">OBSERVER</text>
-      <text x="714" y="137">SOURCE</text>
-      <text x={lensX - 36} y={lensY + 48}>LENS</text>
+
+      <path className="lensing-axis" d={`M ${observer.x} ${observer.y} H ${source.x}`} />
+      <text x={observer.x} y={axisY - 12}>OPTICAL AXIS</text>
+      <path className="lensing-track" d={`M ${trackStart.x} ${trackStart.y} L ${trackEnd.x} ${trackEnd.y}`} markerEnd="url(#motion-arrow)" style={{ stroke: theme.rim }} />
+      <text x={trackStart.x - 4} y={trackStart.y - 9} style={{ fill: theme.rim }}>CONSTANT DIRECTION</text>
+
+      {atPeak ? (
+        <path d={`M ${lensOrigin.x} ${lensOrigin.y} L ${closest.x} ${closest.y}`} fill="none" stroke="#f6d48c" strokeWidth="1.1" opacity=".72" />
+      ) : (
+        <>
+          <path d={`M ${lensOrigin.x} ${lensOrigin.y} L ${closest.x} ${closest.y}`} fill="none" stroke="#aeb5bc" strokeWidth="1" strokeDasharray="3 4" />
+          <path d={`M ${lensOrigin.x} ${lensOrigin.y} L ${lens.x} ${lens.y}`} fill="none" stroke="#f6d48c" strokeWidth="1.1" opacity=".72" />
+          <text x={(lensOrigin.x + closest.x) / 2 - 7} y={(lensOrigin.y + closest.y) / 2 - 6}>u₀</text>
+          <text x={(lensOrigin.x + lens.x) / 2 + 6} y={(lensOrigin.y + lens.y) / 2 - 6} style={{ fill: '#f6d48c' }}>u(t)</text>
+        </>
+      )}
+
+      <g data-alignment-origin="true">
+        <circle cx={lensOrigin.x} cy={lensOrigin.y} r="5.2" fill="#0a0d11" stroke="#e8eef4" strokeWidth="1.1" />
+        <path d={`M ${lensOrigin.x - 8} ${lensOrigin.y} H ${lensOrigin.x + 8} M ${lensOrigin.x} ${lensOrigin.y - 8} V ${lensOrigin.y + 8}`} stroke="#e8eef4" strokeWidth=".8" opacity=".7" />
+        <text x={lensOrigin.x + 10} y={lensOrigin.y - 10} style={{ fill: '#c8d0d7' }}>ONLY β = 0 POINT</text>
+      </g>
+      <circle cx={closest.x} cy={closest.y} r="4.2" fill="#0a0d11" stroke={theme.rim} strokeWidth="1.3" />
+      <text x={closest.x - 68} y={closest.y + 56} textAnchor="middle">CLOSEST APPROACH · τ = 0</text>
+      <text x={closest.x - 68} y={closest.y + 69} textAnchor="middle" style={{ fill: '#f6d48c' }}>
+        {atPeak ? `u(t) = u₀ = ${formatSeparation(u)}` : `u₀ = ${formatSeparation(event.u0)}`}
+      </text>
+
+      <path className="lens-plane-line" d={`M ${planeStart.x} ${planeStart.y} L ${planeEnd.x} ${planeEnd.y}`} />
+      <text x={planeStart.x - 6} y={planeStart.y - 6} textAnchor="end">THIN-LENS PLANE</text>
+      <path data-ray="plus" className="ray ray-a" d={`M ${source.x} ${source.y} L ${bendPlus.x} ${bendPlus.y} L ${observer.x} ${observer.y}`} strokeWidth={rayPlusWidth} opacity={rayPlusOpacity} />
+      <path data-ray="minus" className="ray ray-b" d={`M ${source.x} ${source.y} L ${bendMinus.x} ${bendMinus.y} L ${observer.x} ${observer.y}`} strokeWidth={rayMinusWidth} opacity={rayMinusOpacity} />
+      <circle cx={bendPlus.x} cy={bendPlus.y} r="4.2" fill="#65d8ff" stroke="#071016" strokeWidth="1.5" />
+      <circle cx={bendMinus.x} cy={bendMinus.y} r="4.2" fill="#ffb45e" stroke="#160f08" strokeWidth="1.5" />
+      <text x={bendPlus.x + 8} y={bendPlus.y - 7} style={{ fill: '#65d8ff' }}>θ+</text>
+      <text x={bendMinus.x + 8} y={bendMinus.y + 13} style={{ fill: '#ffb45e' }}>θ−</text>
+
+      <circle cx={observer.x} cy={observer.y} r="8" fill="#e8eef4" opacity=".12" />
+      <circle cx={observer.x} cy={observer.y} r="4.8" className="observer" />
+      <circle cx={lens.x} cy={lens.y} r="20" fill="url(#lens-halo)" />
+      <circle cx={lens.x} cy={lens.y} r="10" fill="#050608" stroke={theme.rim} strokeWidth="2" />
+      {atPeak && <circle cx={lens.x} cy={lens.y} r="15" fill="none" stroke={theme.rim} strokeWidth="1.2" strokeDasharray="3 4" opacity=".72" />}
+      <circle cx={source.x} cy={source.y} r={sourceHaloRadius} fill="url(#source-halo)" />
+      <circle cx={source.x} cy={source.y} r={sourceCoreRadius} fill={sourceColour} />
+      <text x={observer.x - 28} y={observer.y + 25}>FIXED OBSERVER</text>
+      <text x={source.x - 36} y={source.y - 16}>FIXED SOURCE</text>
+      <text x={source.x - 80} y={source.y + 24} style={{ fill: sourceColour }}>A(t) = {formatAmplification(currentAmplification)}</text>
+      <text x={lens.x + 14} y={lens.y + 23}>{theme.text}</text>
+      <text x={lens.x + 14} y={lens.y + 37} style={{ fill: theme.accent }}>{formatMass(event)}</text>
 
       <g className="image-plane">
-        <rect x="28" y="46" width="252" height="150" rx="3" />
-        <text x="48" y="70">IMAGE PLANE</text>
-        <circle cx="154" cy="124" r="45" className="einstein-ring" />
-        <path d={`M 154 79 A 45 45 0 0 1 ${154 + 45 * Math.sin(arcSpan * Math.PI / 360)} ${124 - 45 * Math.cos(arcSpan * Math.PI / 360)}`} style={{ stroke: sourceColour, opacity: ringOpacity }} />
-        <path d={`M 154 169 A 45 45 0 0 1 ${154 - 45 * Math.sin(arcSpan * Math.PI / 360)} ${124 + 45 * Math.cos(arcSpan * Math.PI / 360)}`} style={{ stroke: sourceColour, opacity: ringOpacity }} />
+        <rect x={imageInset.x} y={imageInset.y} width={imageInset.width} height={imageInset.height} rx="12" />
+        <path className="plane-grid" d={`M ${imageInset.x + 14} ${imageCentre.y} H ${imageInset.x + imageInset.width - 14} M ${imageCentre.x} ${imageInset.y + 45} V ${imageInset.y + imageInset.height - 10}`} />
+        <circle cx={imageCentre.x} cy={imageCentre.y} r={einsteinRadius} className="einstein-ring" />
+        <circle cx={imageCentre.x} cy={imageCentre.y} r="3.2" fill="#050608" stroke={theme.rim} strokeWidth="1" />
+        <g className="extended-image" data-extended-image={finiteContours.containsCaustic ? 'annulus' : 'arcs'}>
+          <path d={`${plusContour} ${minusContour}`} fill={sourceColour} fillOpacity=".24" fillRule="evenodd" filter="url(#extended-image-glow)" />
+          <path d={`${plusContour} ${minusContour}`} fill={sourceColour} fillOpacity=".22" fillRule="evenodd" />
+          <path d={plusContour} fill="none" stroke="#65d8ff" strokeWidth="1.7" opacity=".92" />
+          <path d={minusContour} fill="none" stroke="#ffb45e" strokeWidth="1.7" opacity=".86" />
+        </g>
+        {aligned ? (
+          <circle data-einstein-ring="true" cx={imageCentre.x} cy={imageCentre.y} r={einsteinRadius} fill="none" stroke={sourceColour} strokeWidth="2.4" opacity=".98" />
+        ) : (
+          <>
+            {pointImage(imagePlus, '#65d8ff', muPlus, sharePlus, 'θ+', -6)}
+            {pointImage(imageMinus, '#ffb45e', muMinus, shareMinus, 'θ−', 11)}
+          </>
+        )}
+        <text x={imageCentre.x + einsteinRadius + 4} y={imageCentre.y - 4} style={{ fill: '#65d8ff' }}>θE</text>
+        <text x={imageInset.x + 16} y={imageInset.y + 22} style={{ fill: '#f3efe6' }}>IMAGE PLANE</text>
+        <text x={imageInset.x + 16} y={imageInset.y + 39}>{imageStatus}</text>
+        <text x={imageInset.x + imageInset.width - 12} y={imageInset.y + 22} textAnchor="end" className="rho-label">ρvis = 0.05 θE</text>
       </g>
 
       <g className="source-plane">
-        <rect x="620" y="354" width="252" height="150" rx="3" />
-        <text x="640" y="378">SOURCE PLANE</text>
-        <line x1="642" y1="435" x2="850" y2="435" />
-        <circle cx="746" cy="435" r="4" className="caustic" />
-        <circle cx={746 + tau * 27} cy={435 - Math.max(-1.5, Math.min(1.5, event.u0)) * 20} r="6" style={{ fill: sourceColour }} />
+        <rect x={sourceInset.x} y={sourceInset.y} width={sourceInset.width} height={sourceInset.height} rx="12" />
+        <path className="plane-grid" d={`M ${sourceInset.x + 14} ${sourceCentre.y} H ${sourceInset.x + sourceInset.width - 14} M ${sourceCentre.x} ${sourceInset.y + 45} V ${sourceInset.y + sourceInset.height - 10}`} />
+        <path d={`M ${sourceTrackEnd} ${sourceTrackY} H ${sourceTrackStart}`} fill="none" stroke="rgba(188,231,255,.48)" strokeDasharray="6 5" markerEnd="url(#motion-arrow)" />
+        <path d={`M ${sourceCentre.x} ${sourceCentre.y} L ${sourceMarker.x} ${sourceMarker.y}`} fill="none" stroke="#f6d48c" strokeWidth="1.2" />
+        <path d={`M ${impactBracketX - 4} ${sourceCentre.y} h 8 M ${impactBracketX} ${sourceCentre.y} V ${sourceTrackY} M ${impactBracketX - 4} ${sourceTrackY} h 8`} fill="none" stroke="#aeb5bc" />
+        <circle cx={sourceCentre.x} cy={sourceCentre.y} r="3.8" className="caustic" />
+        <circle cx={sourceMarker.x} cy={sourceMarker.y} r="5.4" fill={sourceColour} />
+        <text x={sourceMarker.x + 7} y={sourceMarker.y - 6} style={{ fill: sourceColour }}>SOURCE</text>
+        <text x={(sourceCentre.x + sourceMarker.x) / 2 - 8} y={(sourceCentre.y + sourceMarker.y) / 2 - 5} textAnchor="end" style={{ fill: '#f6d48c' }}>β = u θE</text>
+        <text x={impactBracketX - 7} y={(sourceCentre.y + sourceTrackY) / 2 + 3} textAnchor="end">u₀</text>
+        <text x={sourceInset.x + 16} y={sourceInset.y + 22} style={{ fill: '#f3efe6' }}>SOURCE PLANE</text>
+        <text x={sourceInset.x + 16} y={sourceInset.y + 39} style={{ fill: '#ff7b9a' }}>POINT CAUSTIC β = 0</text>
       </g>
-      <text className="diagram-amplification" x="450" y="72" textAnchor="middle">A = {format(currentAmplification, 2)}×</text>
-      <text className="diagram-equation" x="450" y="92" textAnchor="middle">u(t) = {format(u, 3)} θE · u₀ = {format(event.u0, 3)} θE</text>
+
+      <text className="diagram-amplification" x={width * .5} y={panelTop + 43} textAnchor="middle">A = {formatAmplification(currentAmplification)}</text>
+      <text className="diagram-equation" x={width * .5} y={panelTop + 59} textAnchor="middle">u = {formatSeparation(u)} · τ = {tau.toFixed(2)}</text>
+      <text className="diagram-caption" x={width * .5} y={Math.min(axisY + height * .18, height - 98)} textAnchor="middle">SKY-PLANE PROJECTION · RECTILINEAR LENS MOTION · FIXED SOURCE AND OBSERVER</text>
     </svg>
   )
 }
